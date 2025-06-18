@@ -2,17 +2,100 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>簡易野球シミュレータ</title>
+  <title>オート野球シミュレーター</title>
   <style>
-    body { font-family: sans-serif; margin: 2em; }
-    #log { white-space: pre-line; background: #f0f0f0; padding: 1em; border-radius: 5px; }
-    button { margin-top: 1em; font-size: 1.2em; }
+    body { font-family: sans-serif; padding: 2em; }
+    #log { white-space: pre-line; background: #f9f9f9; padding: 1em; border: 1px solid #ccc; }
+    textarea { width: 100%; height: 120px; margin-bottom: 1em; font-family: monospace; }
+    button { padding: 0.5em 1em; font-size: 1em; }
   </style>
 </head>
 <body>
-  <h1>簡易野球シミュレータ</h1>
-  <button onclick="startGame()">試合開始！</button>
+  <h1>オート野球シミュレーター</h1>
+  <h3>チームA 選手データ（名前, 打率）</h3>
+  <textarea id="teamAData">A選手1,0.320
+A選手2,0.280
+A選手3,0.310
+A選手4,0.250
+A選手5,0.300
+A選手6,0.275
+A選手7,0.260
+A選手8,0.240
+A選手9,0.290
+A選手10,0.265
+A選手11,0.230
+A選手12,0.255
+A選手13,0.310
+A選手14,0.220
+A選手15,0.285</textarea>
+
+  <h3>チームB 選手データ（名前, 打率）</h3>
+  <textarea id="teamBData">B選手1,0.300
+B選手2,0.270
+B選手3,0.290
+B選手4,0.250
+B選手5,0.310
+B選手6,0.260
+B選手7,0.280
+B選手8,0.240
+B選手9,0.255
+B選手10,0.275
+B選手11,0.245
+B選手12,0.265
+B選手13,0.230
+B選手14,0.215
+B選手15,0.295</textarea>
+
+  <button onclick="startGame()">試合開始</button>
   <div id="log"></div>
-  <script src="script.js"></script>
+
+  <script>
+    function parseTeamData(text) {
+      return text.trim().split('\n').map(line => {
+        const [name, avg] = line.split(',');
+        return { name: name.trim(), avg: parseFloat(avg.trim()) };
+      });
+    }
+
+    function startGame() {
+      const teamA = parseTeamData(document.getElementById('teamAData').value);
+      const teamB = parseTeamData(document.getElementById('teamBData').value);
+      const log = document.getElementById('log');
+      log.textContent = '';
+
+      let score = { A: 0, B: 0 };
+      let lineup = { A: 0, B: 0 };
+
+      for (let inning = 1; inning <= 9; inning++) {
+        logLine(`\n【${inning}回表】`, log);
+        score.A += playHalfInning(teamA, lineup, 'A', log);
+
+        logLine(`\n【${inning}回裏】`, log);
+        score.B += playHalfInning(teamB, lineup, 'B', log);
+      }
+
+      logLine(`\n--- 試合終了 ---`, log);
+      logLine(`スコア：チームA ${score.A} - ${score.B} チームB`, log);
+    }
+
+    function playHalfInning(team, lineup, key, log) {
+      let outs = 0;
+      let runs = 0;
+      while (outs < 3) {
+        const batter = team[lineup[key] % team.length];
+        const hit = Math.random() < batter.avg;
+        logLine(`${batter.name}：${hit ? 'ヒット！1点！' : 'アウト…'}`, log);
+        if (hit) runs++;
+        else outs++;
+        lineup[key]++;
+      }
+      logLine(`この回の得点：${runs}`, log);
+      return runs;
+    }
+
+    function logLine(text, log) {
+      log.textContent += text + "\n";
+    }
+  </script>
 </body>
 </html>
